@@ -1,5 +1,5 @@
 --========================================================--
--- ChatClicker (Compatible Version)
+-- ChatClicker (Nice GUI Version)
 --========================================================--
 
 local UIS          = game:GetService("UserInputService")
@@ -41,43 +41,52 @@ if state.gui then
     state.gui = nil
 end
 
---================ SIMPLE + COMPATIBLE GUI =================--
+--================ NICE GUI =================--
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "ChatClickerGui"
 gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
 gui.Parent = player:WaitForChild("PlayerGui")
 
 state.gui = gui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 140)
+frame.Size = UDim2.new(0, 260, 0, 150)
 frame.Position = UDim2.new(0, 20, 0, 100)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+frame.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Parent = gui
 
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = frame
+
 -- HEADER
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 28)
-header.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+header.Size = UDim2.new(1, 0, 0, 32)
+header.BackgroundColor3 = Color3.fromRGB(38, 38, 45)
 header.BorderSizePixel = 0
 header.Parent = frame
 
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 10)
+headerCorner.Parent = header
+
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -30, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
+title.Size = UDim2.new(1, -40, 1, 0)
+title.Position = UDim2.new(0, 12, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "ChatClicker"
-title.TextColor3 = Color3.fromRGB(230, 230, 230)
+title.TextColor3 = Color3.fromRGB(235, 235, 235)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 14
+title.TextSize = 15
 title.Parent = header
 
 local minimize = Instance.new("TextButton")
-minimize.Size = UDim2.new(0, 24, 0, 24)
-minimize.Position = UDim2.new(1, -26, 0, 2)
+minimize.Size = UDim2.new(0, 26, 0, 26)
+minimize.Position = UDim2.new(1, -30, 0, 3)
 minimize.BackgroundTransparency = 1
 minimize.Text = "-"
 minimize.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -94,7 +103,7 @@ minimize.MouseButton1Click:Connect(function()
             child.Visible = not minimized
         end
     end
-    frame.Size = minimized and UDim2.new(0, 240, 0, 28) or UDim2.new(0, 240, 0, 140)
+    frame.Size = minimized and UDim2.new(0, 260, 0, 32) or UDim2.new(0, 260, 0, 150)
 end)
 
 -- DRAGGING
@@ -123,17 +132,21 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- STATUS + INDICATOR (close together)
+-- STATUS + INDICATOR (close + clean)
 local indicator = Instance.new("Frame")
-indicator.Size = UDim2.new(0, 10, 0, 10)
-indicator.Position = UDim2.new(0, 10, 0, 40)
+indicator.Size = UDim2.new(0, 12, 0, 12)
+indicator.Position = UDim2.new(0, 10, 0, 42)
 indicator.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
 indicator.BorderSizePixel = 0
 indicator.Parent = frame
 
+local indCorner = Instance.new("UICorner")
+indCorner.CornerRadius = UDim.new(1, 0)
+indCorner.Parent = indicator
+
 local statusText = Instance.new("TextLabel")
 statusText.Size = UDim2.new(1, -40, 0, 20)
-statusText.Position = UDim2.new(0, 26, 0, 36)
+statusText.Position = UDim2.new(0, 28, 0, 38)
 statusText.BackgroundTransparency = 1
 statusText.TextColor3 = Color3.fromRGB(255, 60, 60)
 statusText.Font = Enum.Font.GothamBold
@@ -144,7 +157,7 @@ statusText.Parent = frame
 -- CLICK POSITION
 local coordLabel = Instance.new("TextLabel")
 coordLabel.Size = UDim2.new(1, -20, 0, 20)
-coordLabel.Position = UDim2.new(0, 10, 0, 60)
+coordLabel.Position = UDim2.new(0, 10, 0, 65)
 coordLabel.BackgroundTransparency = 1
 coordLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 coordLabel.Font = Enum.Font.Gotham
@@ -155,7 +168,7 @@ coordLabel.Parent = frame
 -- DELAY LABEL
 local delayLabel = Instance.new("TextLabel")
 delayLabel.Size = UDim2.new(1, -20, 0, 20)
-delayLabel.Position = UDim2.new(0, 10, 0, 82)
+delayLabel.Position = UDim2.new(0, 10, 0, 90)
 delayLabel.BackgroundTransparency = 1
 delayLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
 delayLabel.Font = Enum.Font.Gotham
@@ -166,25 +179,43 @@ delayLabel.Parent = frame
 -- SLIDER
 local sliderBg = Instance.new("Frame")
 sliderBg.Size = UDim2.new(1, -40, 0, 14)
-sliderBg.Position = UDim2.new(0, 20, 0, 110)
+sliderBg.Position = UDim2.new(0, 20, 0, 120)
 sliderBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
 sliderBg.BorderSizePixel = 0
 sliderBg.Parent = frame
+
+local sliderBgCorner = Instance.new("UICorner")
+sliderBgCorner.CornerRadius = UDim.new(1, 0)
+sliderBgCorner.Parent = sliderBg
 
 local sliderFill = Instance.new("Frame")
 sliderFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 sliderFill.BorderSizePixel = 0
 sliderFill.Parent = sliderBg
 
+local sliderFillCorner = Instance.new("UICorner")
+sliderFillCorner.CornerRadius = UDim.new(1, 0)
+sliderFillCorner.Parent = sliderFill
+
 local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 16, 0, 16)
+knob.Size = UDim2.new(0, 18, 0, 18)
+knob.AnchorPoint = Vector2.new(0.5, 0.5)
 knob.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 knob.BorderSizePixel = 0
 knob.Parent = sliderBg
 
+local knobCorner = Instance.new("UICorner")
+knobCorner.CornerRadius = UDim.new(1, 0)
+knobCorner.Parent = knob
+
 local function animateSlider(pct)
-    sliderFill.Size = UDim2.new(pct, 0, 1, 0)
-    knob.Position = UDim2.new(pct, -8, 0, -1)
+    TweenService:Create(sliderFill, TweenInfo.new(0.15), {
+        Size = UDim2.new(pct, 0, 1, 0)
+    }):Play()
+
+    TweenService:Create(knob, TweenInfo.new(0.15), {
+        Position = UDim2.new(pct, 0, 0.5, 0)
+    }):Play()
 end
 
 local function applySlider(pct)
