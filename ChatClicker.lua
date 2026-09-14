@@ -1,5 +1,5 @@
 -- Chat Clicker — two clicks per cycle
--- [ = toggle on/off
+-- [  = toggle on/off
 -- ]  = destroy the GUI and stop everything
 -- Slider controls the delay between full cycles (1s - 20s)
 -- Run in your executor.
@@ -305,7 +305,7 @@ state.destroy = destroy
 
 UIS.InputBegan:Connect(function(input, gp)
     if gp or destroyed then return end
-    if input.KeyCode == Enum.KeyCode.[ then
+    if input.KeyCode == Enum.KeyCode.LeftBracket then
         toggle()
     elseif input.KeyCode == Enum.KeyCode.RightBracket then
         destroy()
@@ -313,4 +313,4 @@ UIS.InputBegan:Connect(function(input, gp)
 end)
 
 updateGui()
-print("[ChatClicker] loaded — F8 toggle · ] destroy")
+print("[ChatClicker] loaded — [ toggle · ] destroy")
