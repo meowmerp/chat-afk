@@ -1,23 +1,59 @@
---================ PREMIUM GUI =================--
+--========================================================--
+-- ChatClicker (Final Premium Version)
+--========================================================--
 
+local UIS          = game:GetService("UserInputService")
+local VIM          = game:GetService("VirtualInputManager")
 local TweenService = game:GetService("TweenService")
+local Players      = game:GetService("Players")
+local player       = Players.LocalPlayer
 
--- Destroy old GUI if it exists
+--================ CONFIG =================--
+local CLICK_POS   = Vector2.new(139, 32)
+local CLICK_DELAY = 0.6
+--==========================================--
+
+getgenv().ChatClicker = getgenv().ChatClicker or {}
+local state = getgenv().ChatClicker
+state.running   = state.running   or false
+state.loopDelay = state.loopDelay or 3
+state.gui       = state.gui       or nil
+
+local destroyed  = false
+local loopThread = nil
+
+--================ CLICK LOGIC =================--
+local function clickOnce()
+    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, true,  game, 1)
+    task.wait(0.05)
+    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, false, game, 1)
+end
+
+local function doCycle()
+    clickOnce()
+    task.wait(CLICK_DELAY)
+    clickOnce()
+end
+
+--================ GUI CLEANUP =================--
 if state.gui then
     pcall(function() state.gui:Destroy() end)
     state.gui = nil
 end
 
+--================ PREMIUM GUI =================--
 local gui = Instance.new("ScreenGui")
 gui.Name = "ChatClickerGui"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 
-local ok, hui = pcall(function() return gethui and gethui() end)
-gui.Parent = ok and hui or player:WaitForChild("PlayerGui")
+do
+    local ok, hui = pcall(function() return gethui and gethui() end)
+    gui.Parent = ok and hui or player:WaitForChild("PlayerGui")
+end
+
 state.gui = gui
 
--- Main frame
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 260, 0, 170)
 frame.Position = UDim2.new(0, 20, 0, 100)
@@ -31,7 +67,6 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
--- Glow effect
 local glow = Instance.new("ImageLabel")
 glow.Name = "Glow"
 glow.Parent = frame
@@ -44,7 +79,6 @@ glow.ImageColor3 = Color3.fromRGB(0, 170, 255)
 glow.ImageTransparency = 0.55
 glow.ZIndex = 0
 
--- Drag bar
 local dragBar = Instance.new("TextLabel")
 dragBar.Size = UDim2.new(1, 0, 0, 32)
 dragBar.BackgroundTransparency = 1
@@ -56,7 +90,6 @@ dragBar.Active = true
 dragBar.ZIndex = 6
 dragBar.Parent = frame
 
--- Minimize button
 local minimize = Instance.new("TextButton")
 minimize.Size = UDim2.new(0, 26, 0, 26)
 minimize.Position = UDim2.new(1, -32, 0, 3)
@@ -80,13 +113,12 @@ minimize.MouseButton1Click:Connect(function()
     frame.Size = minimized and UDim2.new(0, 260, 0, 32) or UDim2.new(0, 260, 0, 170)
 end)
 
--- Drag logic
 local dragStart, startPos
 
 dragBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragStart = input.Position
-        startPos = frame.Position
+        startPos  = frame.Position
     end
 end)
 
@@ -106,7 +138,6 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- LED status indicator
 local led = Instance.new("Frame")
 led.Size = UDim2.new(0, 12, 0, 12)
 led.Position = UDim2.new(0, 12, 0, 40)
@@ -119,7 +150,6 @@ local ledCorner = Instance.new("UICorner")
 ledCorner.CornerRadius = UDim.new(1, 0)
 ledCorner.Parent = led
 
--- Labels
 local coordLabel = Instance.new("TextLabel")
 coordLabel.Size = UDim2.new(1, -20, 0, 20)
 coordLabel.Position = UDim2.new(0, 10, 0, 60)
@@ -142,7 +172,6 @@ delayLabel.TextSize = 13
 delayLabel.ZIndex = 6
 delayLabel.Parent = frame
 
--- Slider
 local sliderBg = Instance.new("Frame")
 sliderBg.Size = UDim2.new(1, -40, 0, 14)
 sliderBg.Position = UDim2.new(0, 20, 0, 110)
@@ -177,7 +206,6 @@ local knobCorner = Instance.new("UICorner")
 knobCorner.CornerRadius = UDim.new(1, 0)
 knobCorner.Parent = knob
 
--- Slider animation
 local function animateSlider(pct)
     TweenService:Create(sliderFill, TweenInfo.new(0.15), {
         Size = UDim2.new(pct, 0, 1, 0)
@@ -200,9 +228,9 @@ applySlider((state.loopDelay - 1) / 19)
 local draggingSlider = false
 
 local function updateSlider(input)
-    local barPos = sliderBg.AbsolutePosition.X
+    local barPos  = sliderBg.AbsolutePosition.X
     local barSize = sliderBg.AbsoluteSize.X
-    local rel = math.clamp(input.Position.X - barPos, 0, barSize)
+    local rel     = math.clamp(input.Position.X - barPos, 0, barSize)
     applySlider(rel / barSize)
 end
 
@@ -231,9 +259,63 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- Status LED updater
-function updateGui()
+--================ LOOP =================--
+local function updateGui()
     led.BackgroundColor3 = state.running
         and Color3.fromRGB(0, 255, 140)
         or Color3.fromRGB(255, 70, 70)
 end
+
+local function startLoop()
+    if loopThread then return end
+    loopThread = task.spawn(function()
+        while state.running and not destroyed do
+            local ok, err = pcall(function()
+                doCycle()
+                task.wait(state.loopDelay)
+            end)
+            if not ok then
+                warn("[ChatClicker] error: " .. tostring(err))
+                state.running = false
+                updateGui()
+                break
+            end
+        end
+        loopThread = nil
+    end)
+end
+
+local function stopLoop()
+    state.running = false
+    loopThread = nil
+end
+
+--================ KEYBINDS =================--
+local function toggle()
+    if destroyed then return end
+    state.running = not state.running
+    if state.running then startLoop() else stopLoop() end
+    updateGui()
+end
+
+local function destroy()
+    if destroyed then return end
+    destroyed = true
+    state.running = false
+    loopThread = nil
+    if state.gui then
+        pcall(function() state.gui:Destroy() end)
+        state.gui = nil
+    end
+end
+
+UIS.InputBegan:Connect(function(input, gp)
+    if gp or destroyed then return end
+    if input.KeyCode == Enum.KeyCode.F8 then
+        toggle()
+    elseif input.KeyCode == Enum.KeyCode.RightBracket then
+        destroy()
+    end
+end)
+
+updateGui()
