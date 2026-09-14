@@ -1,47 +1,5 @@
---========================================================--
--- ChatClicker (Final Premium Version)
---========================================================--
+--================ NEW CLEAN GUI =================--
 
-local UIS          = game:GetService("UserInputService")
-local VIM          = game:GetService("VirtualInputManager")
-local TweenService = game:GetService("TweenService")
-local Players      = game:GetService("Players")
-local player       = Players.LocalPlayer
-
---================ CONFIG =================--
-local CLICK_POS   = Vector2.new(139, 32)
-local CLICK_DELAY = 0.6
---==========================================--
-
-getgenv().ChatClicker = getgenv().ChatClicker or {}
-local state = getgenv().ChatClicker
-state.running   = state.running   or false
-state.loopDelay = state.loopDelay or 3
-state.gui       = state.gui       or nil
-
-local destroyed  = false
-local loopThread = nil
-
---================ CLICK LOGIC =================--
-local function clickOnce()
-    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, true,  game, 1)
-    task.wait(0.05)
-    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, false, game, 1)
-end
-
-local function doCycle()
-    clickOnce()
-    task.wait(CLICK_DELAY)
-    clickOnce()
-end
-
---================ GUI CLEANUP =================--
-if state.gui then
-    pcall(function() state.gui:Destroy() end)
-    state.gui = nil
-end
-
---================ PREMIUM GUI =================--
 local gui = Instance.new("ScreenGui")
 gui.Name = "ChatClickerGui"
 gui.ResetOnSpawn = false
@@ -54,71 +12,70 @@ end
 
 state.gui = gui
 
+-- Main frame
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 170)
+frame.Size = UDim2.new(0, 260, 0, 150)
 frame.Position = UDim2.new(0, 20, 0, 100)
-frame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 frame.BorderSizePixel = 0
 frame.Active = true
-frame.ZIndex = 5
 frame.Parent = gui
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
+corner.CornerRadius = UDim.new(0, 8)
 corner.Parent = frame
 
-local glow = Instance.new("ImageLabel")
-glow.Name = "Glow"
-glow.Parent = frame
-glow.AnchorPoint = Vector2.new(0.5, 0.5)
-glow.Position = UDim2.new(0.5, 0, 0.5, 0)
-glow.Size = UDim2.new(1, 40, 1, 40)
-glow.BackgroundTransparency = 1
-glow.Image = "rbxassetid://5028857084"
-glow.ImageColor3 = Color3.fromRGB(0, 170, 255)
-glow.ImageTransparency = 0.55
-glow.ZIndex = 0
+-- Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 30)
+header.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+header.BorderSizePixel = 0
+header.Parent = frame
 
-local dragBar = Instance.new("TextLabel")
-dragBar.Size = UDim2.new(1, 0, 0, 32)
-dragBar.BackgroundTransparency = 1
-dragBar.Text = "ChatClicker"
-dragBar.TextColor3 = Color3.fromRGB(230, 230, 230)
-dragBar.Font = Enum.Font.GothamBold
-dragBar.TextSize = 16
-dragBar.Active = true
-dragBar.ZIndex = 6
-dragBar.Parent = frame
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 8)
+headerCorner.Parent = header
 
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -40, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "ChatClicker"
+title.TextColor3 = Color3.fromRGB(230, 230, 230)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 15
+title.Parent = header
+
+-- Minimize button
 local minimize = Instance.new("TextButton")
 minimize.Size = UDim2.new(0, 26, 0, 26)
-minimize.Position = UDim2.new(1, -32, 0, 3)
+minimize.Position = UDim2.new(1, -30, 0, 2)
 minimize.BackgroundTransparency = 1
 minimize.Text = "-"
-minimize.TextColor3 = Color3.fromRGB(230, 230, 230)
+minimize.TextColor3 = Color3.fromRGB(200, 200, 200)
 minimize.Font = Enum.Font.GothamBold
 minimize.TextSize = 20
-minimize.ZIndex = 6
-minimize.Parent = frame
+minimize.Parent = header
 
 local minimized = false
 
 minimize.MouseButton1Click:Connect(function()
     minimized = not minimized
     for _, child in ipairs(frame:GetChildren()) do
-        if child ~= dragBar and child ~= minimize and child ~= glow then
+        if child ~= header then
             child.Visible = not minimized
         end
     end
-    frame.Size = minimized and UDim2.new(0, 260, 0, 32) or UDim2.new(0, 260, 0, 170)
+    frame.Size = minimized and UDim2.new(0, 260, 0, 30) or UDim2.new(0, 260, 0, 150)
 end)
 
+-- Dragging
 local dragStart, startPos
 
-dragBar.InputBegan:Connect(function(input)
+header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragStart = input.Position
-        startPos  = frame.Position
+        startPos = frame.Position
     end
 end)
 
@@ -138,46 +95,45 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
-local led = Instance.new("Frame")
-led.Size = UDim2.new(0, 12, 0, 12)
-led.Position = UDim2.new(0, 12, 0, 40)
-led.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
-led.BorderSizePixel = 0
-led.ZIndex = 6
-led.Parent = frame
+-- ON/OFF text
+local statusText = Instance.new("TextLabel")
+statusText.Size = UDim2.new(1, -20, 0, 20)
+statusText.Position = UDim2.new(0, 10, 0, 40)
+statusText.BackgroundTransparency = 1
+statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusText.Font = Enum.Font.GothamBold
+statusText.TextSize = 14
+statusText.Text = "Status: OFF"
+statusText.Parent = frame
 
-local ledCorner = Instance.new("UICorner")
-ledCorner.CornerRadius = UDim.new(1, 0)
-ledCorner.Parent = led
-
+-- Click position label
 local coordLabel = Instance.new("TextLabel")
 coordLabel.Size = UDim2.new(1, -20, 0, 20)
-coordLabel.Position = UDim2.new(0, 10, 0, 60)
+coordLabel.Position = UDim2.new(0, 10, 0, 65)
 coordLabel.BackgroundTransparency = 1
-coordLabel.TextColor3 = Color3.fromRGB(140, 140, 140)
-coordLabel.Text = "Click @ (" .. CLICK_POS.X .. ", " .. CLICK_POS.Y .. ")"
+coordLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 coordLabel.Font = Enum.Font.Gotham
 coordLabel.TextSize = 13
-coordLabel.ZIndex = 6
+coordLabel.Text = "Click @ (" .. CLICK_POS.X .. ", " .. CLICK_POS.Y .. ")"
 coordLabel.Parent = frame
 
+-- Delay label
 local delayLabel = Instance.new("TextLabel")
 delayLabel.Size = UDim2.new(1, -20, 0, 20)
-delayLabel.Position = UDim2.new(0, 10, 0, 82)
+delayLabel.Position = UDim2.new(0, 10, 0, 90)
 delayLabel.BackgroundTransparency = 1
 delayLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
-delayLabel.Text = "Loop delay: " .. state.loopDelay .. "s"
 delayLabel.Font = Enum.Font.Gotham
 delayLabel.TextSize = 13
-delayLabel.ZIndex = 6
+delayLabel.Text = "Loop delay: " .. state.loopDelay .. "s"
 delayLabel.Parent = frame
 
+-- Slider
 local sliderBg = Instance.new("Frame")
 sliderBg.Size = UDim2.new(1, -40, 0, 14)
-sliderBg.Position = UDim2.new(0, 20, 0, 110)
-sliderBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+sliderBg.Position = UDim2.new(0, 20, 0, 120)
+sliderBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
 sliderBg.BorderSizePixel = 0
-sliderBg.ZIndex = 6
 sliderBg.Parent = frame
 
 local sliderBgCorner = Instance.new("UICorner")
@@ -187,7 +143,6 @@ sliderBgCorner.Parent = sliderBg
 local sliderFill = Instance.new("Frame")
 sliderFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 sliderFill.BorderSizePixel = 0
-sliderFill.ZIndex = 7
 sliderFill.Parent = sliderBg
 
 local sliderFillCorner = Instance.new("UICorner")
@@ -199,7 +154,6 @@ knob.Size = UDim2.new(0, 18, 0, 18)
 knob.AnchorPoint = Vector2.new(0.5, 0.5)
 knob.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
 knob.BorderSizePixel = 0
-knob.ZIndex = 8
 knob.Parent = sliderBg
 
 local knobCorner = Instance.new("UICorner")
@@ -228,9 +182,9 @@ applySlider((state.loopDelay - 1) / 19)
 local draggingSlider = false
 
 local function updateSlider(input)
-    local barPos  = sliderBg.AbsolutePosition.X
+    local barPos = sliderBg.AbsolutePosition.X
     local barSize = sliderBg.AbsoluteSize.X
-    local rel     = math.clamp(input.Position.X - barPos, 0, barSize)
+    local rel = math.clamp(input.Position.X - barPos, 0, barSize)
     applySlider(rel / barSize)
 end
 
@@ -259,63 +213,7 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
---================ LOOP =================--
-local function updateGui()
-    led.BackgroundColor3 = state.running
-        and Color3.fromRGB(0, 255, 140)
-        or Color3.fromRGB(255, 70, 70)
+-- Status updater
+function updateGui()
+    statusText.Text = state.running and "Status: ON" or "Status: OFF"
 end
-
-local function startLoop()
-    if loopThread then return end
-    loopThread = task.spawn(function()
-        while state.running and not destroyed do
-            local ok, err = pcall(function()
-                doCycle()
-                task.wait(state.loopDelay)
-            end)
-            if not ok then
-                warn("[ChatClicker] error: " .. tostring(err))
-                state.running = false
-                updateGui()
-                break
-            end
-        end
-        loopThread = nil
-    end)
-end
-
-local function stopLoop()
-    state.running = false
-    loopThread = nil
-end
-
---================ KEYBINDS =================--
-local function toggle()
-    if destroyed then return end
-    state.running = not state.running
-    if state.running then startLoop() else stopLoop() end
-    updateGui()
-end
-
-local function destroy()
-    if destroyed then return end
-    destroyed = true
-    state.running = false
-    loopThread = nil
-    if state.gui then
-        pcall(function() state.gui:Destroy() end)
-        state.gui = nil
-    end
-end
-
-UIS.InputBegan:Connect(function(input, gp)
-    if gp or destroyed then return end
-    if input.KeyCode == Enum.KeyCode.F8 then
-        toggle()
-    elseif input.KeyCode == Enum.KeyCode.RightBracket then
-        destroy()
-    end
-end)
-
-updateGui()
