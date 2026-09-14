@@ -1,44 +1,38 @@
 --========================================================--
--- ChatClicker (Dark Modern Rounded GUI - Potassium Safe)
+-- ChatClicker (Original Boxy GUI - Stable Version)
 --========================================================--
 
 local UIS = game:GetService("UserInputService")
+local VIM = game:GetService("VirtualInputManager")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 --================ CONFIG =================--
 local CLICK_POS = Vector2.new(139, 32)
 local CLICK_DELAY = 0.6
-local loopDelay = 3
 local running = false
 local destroyed = false
 local loopThread = nil
 --==========================================--
 
---================ SAFE CLICK METHOD =================--
-local function safeClick()
-    UIS.InputBegan:Fire({
-        UserInputType = Enum.UserInputType.MouseButton1,
-        Position = CLICK_POS
-    })
+--================ CLICK LOGIC =================--
+local function clickOnce()
+    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, true, game, 1)
     task.wait(0.05)
-    UIS.InputEnded:Fire({
-        UserInputType = Enum.UserInputType.MouseButton1,
-        Position = CLICK_POS
-    })
+    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, false, game, 1)
 end
 
 local function doCycle()
-    safeClick()
+    clickOnce()
     task.wait(CLICK_DELAY)
-    safeClick()
+    clickOnce()
 end
 
 --================ GUI CLEANUP =================--
-local oldGui = player:FindFirstChild("PlayerGui"):FindFirstChild("ChatClickerGui")
+local oldGui = player:WaitForChild("PlayerGui"):FindFirstChild("ChatClickerGui")
 if oldGui then oldGui:Destroy() end
 
---================ DARK MODERN ROUNDED GUI =================--
+--================ ORIGINAL BOXY GUI =================--
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "ChatClickerGui"
@@ -46,214 +40,67 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 150)
+frame.Size = UDim2.new(0, 200, 0, 120)
 frame.Position = UDim2.new(0, 20, 0, 100)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-frame.BorderSizePixel = 0
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 2
+frame.BorderColor3 = Color3.fromRGB(20, 20, 20)
 frame.Active = true
 frame.Parent = gui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
-corner.Parent = frame
-
--- HEADER
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 32)
-header.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-header.BorderSizePixel = 0
-header.Parent = frame
-
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 12)
-headerCorner.Parent = header
-
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -40, 1, 0)
-title.Position = UDim2.new(0, 12, 0, 0)
-title.BackgroundTransparency = 1
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+title.BorderSizePixel = 2
+title.BorderColor3 = Color3.fromRGB(20, 20, 20)
 title.Text = "ChatClicker"
-title.TextColor3 = Color3.fromRGB(230, 230, 230)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.SourceSansBold
-title.TextSize = 18
-title.Parent = header
+title.TextSize = 20
+title.Parent = frame
 
-local minimize = Instance.new("TextButton")
-minimize.Size = UDim2.new(0, 26, 0, 26)
-minimize.Position = UDim2.new(1, -30, 0, 3)
-minimize.BackgroundTransparency = 1
-minimize.Text = "-"
-minimize.TextColor3 = Color3.fromRGB(200, 200, 200)
-minimize.Font = Enum.Font.SourceSansBold
-minimize.TextSize = 22
-minimize.Parent = header
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1, 0, 0, 25)
+status.Position = UDim2.new(0, 0, 0, 35)
+status.BackgroundTransparency = 1
+status.Text = "Status: OFF"
+status.TextColor3 = Color3.fromRGB(255, 60, 60)
+status.Font = Enum.Font.SourceSansBold
+status.TextSize = 18
+status.Parent = frame
 
-local minimized = false
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(1, -20, 0, 30)
+toggleBtn.Position = UDim2.new(0, 10, 0, 65)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+toggleBtn.BorderSizePixel = 2
+toggleBtn.BorderColor3 = Color3.fromRGB(20, 20, 20)
+toggleBtn.Text = "Toggle (F8)"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextSize = 18
+toggleBtn.Parent = frame
 
-minimize.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    for _, child in ipairs(frame:GetChildren()) do
-        if child ~= header then
-            child.Visible = not minimized
-        end
-    end
-    frame.Size = minimized and UDim2.new(0, 260, 0, 32) or UDim2.new(0, 260, 0, 150)
-end)
-
--- DRAGGING
-local dragStart, startPos
-
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragStart = input.Position
-        startPos = frame.Position
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if dragStart and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragStart = nil
-    end
-end)
-
--- STATUS + INDICATOR
-local indicator = Instance.new("Frame")
-indicator.Size = UDim2.new(0, 12, 0, 12)
-indicator.Position = UDim2.new(0, 10, 0, 42)
-indicator.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-indicator.BorderSizePixel = 0
-indicator.Parent = frame
-
-local indCorner = Instance.new("UICorner")
-indCorner.CornerRadius = UDim.new(1, 0)
-indCorner.Parent = indicator
-
-local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(1, -40, 0, 20)
-statusText.Position = UDim2.new(0, 28, 0, 38)
-statusText.BackgroundTransparency = 1
-statusText.TextColor3 = Color3.fromRGB(255, 60, 60)
-statusText.Font = Enum.Font.SourceSansBold
-statusText.TextSize = 16
-statusText.Text = "Status: OFF"
-statusText.Parent = frame
-
--- CLICK POSITION
-local coordLabel = Instance.new("TextLabel")
-coordLabel.Size = UDim2.new(1, -20, 0, 20)
-coordLabel.Position = UDim2.new(0, 10, 0, 65)
-coordLabel.BackgroundTransparency = 1
-coordLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-coordLabel.Font = Enum.Font.SourceSans
-coordLabel.TextSize = 14
-coordLabel.Text = "Click @ (" .. CLICK_POS.X .. ", " .. CLICK_POS.Y .. ")"
-coordLabel.Parent = frame
-
--- DELAY LABEL
-local delayLabel = Instance.new("TextLabel")
-delayLabel.Size = UDim2.new(1, -20, 0, 20)
-delayLabel.Position = UDim2.new(0, 10, 0, 90)
-delayLabel.BackgroundTransparency = 1
-delayLabel.TextColor3 = Color3.fromRGB(0, 170, 255)
-delayLabel.Font = Enum.Font.SourceSans
-delayLabel.TextSize = 14
-delayLabel.Text = "Loop delay: " .. loopDelay .. "s"
-delayLabel.Parent = frame
-
--- SLIDER
-local sliderBg = Instance.new("Frame")
-sliderBg.Size = UDim2.new(1, -40, 0, 14)
-sliderBg.Position = UDim2.new(0, 20, 0, 120)
-sliderBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-sliderBg.BorderSizePixel = 0
-sliderBg.Parent = frame
-
-local sliderBgCorner = Instance.new("UICorner")
-sliderBgCorner.CornerRadius = UDim.new(1, 0)
-sliderBgCorner.Parent = sliderBg
-
-local sliderFill = Instance.new("Frame")
-sliderFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-sliderFill.BorderSizePixel = 0
-sliderFill.Parent = sliderBg
-
-local sliderFillCorner = Instance.new("UICorner")
-sliderFillCorner.CornerRadius = UDim.new(1, 0)
-sliderFillCorner.Parent = sliderFill
-
-local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 18, 0, 18)
-knob.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
-knob.BorderSizePixel = 0
-knob.Parent = sliderBg
-
-local knobCorner = Instance.new("UICorner")
-knobCorner.CornerRadius = UDim.new(1, 0)
-knobCorner.Parent = knob
-
-local function applySlider(pct)
-    sliderFill.Size = UDim2.new(pct, 0, 1, 0)
-    knob.Position = UDim2.new(pct, -9, 0, -2)
-    loopDelay = math.floor(1 + pct * 19 + 0.5)
-    delayLabel.Text = "Loop delay: " .. loopDelay .. "s"
-end
-
-applySlider((loopDelay - 1) / 19)
-
-local draggingSlider = false
-
-local function updateSlider(input)
-    local barPos = sliderBg.AbsolutePosition.X
-    local barSize = sliderBg.AbsoluteSize.X
-    local rel = math.clamp(input.Position.X - barPos, 0, barSize)
-    applySlider(rel / barSize)
-end
-
-sliderBg.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = true
-        updateSlider(input)
-    end
-end)
-
-knob.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = true
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
-        updateSlider(input)
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingSlider = false
-    end
-end)
+local destroyBtn = Instance.new("TextButton")
+destroyBtn.Size = UDim2.new(1, -20, 0, 30)
+destroyBtn.Position = UDim2.new(0, 10, 0, 100)
+destroyBtn.BackgroundColor3 = Color3.fromRGB(80, 30, 30)
+destroyBtn.BorderSizePixel = 2
+destroyBtn.BorderColor3 = Color3.fromRGB(20, 20, 20)
+destroyBtn.Text = "Destroy (])"
+destroyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+destroyBtn.Font = Enum.Font.SourceSansBold
+destroyBtn.TextSize = 18
+destroyBtn.Parent = frame
 
 --================ LOOP =================--
 local function updateGui()
     if running then
-        statusText.Text = "Status: ON"
-        statusText.TextColor3 = Color3.fromRGB(0, 255, 120)
-        indicator.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
+        status.Text = "Status: ON"
+        status.TextColor3 = Color3.fromRGB(0, 255, 120)
     else
-        statusText.Text = "Status: OFF"
-        statusText.TextColor3 = Color3.fromRGB(255, 60, 60)
-        indicator.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        status.Text = "Status: OFF"
+        status.TextColor3 = Color3.fromRGB(255, 60, 60)
     end
 end
 
@@ -262,7 +109,7 @@ local function startLoop()
     loopThread = task.spawn(function()
         while running and not destroyed do
             doCycle()
-            task.wait(loopDelay)
+            task.wait(3)
         end
         loopThread = nil
     end)
@@ -272,6 +119,20 @@ local function stopLoop()
     running = false
     loopThread = nil
 end
+
+--================ BUTTONS =================--
+toggleBtn.MouseButton1Click:Connect(function()
+    running = not running
+    if running then startLoop() else stopLoop() end
+    updateGui()
+end)
+
+destroyBtn.MouseButton1Click:Connect(function()
+    destroyed = true
+    running = false
+    loopThread = nil
+    gui:Destroy()
+end)
 
 --================ KEYBINDS =================--
 UIS.InputBegan:Connect(function(input, gp)
