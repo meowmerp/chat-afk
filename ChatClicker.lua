@@ -1,5 +1,5 @@
 -- Chat Clicker — two clicks per cycle
--- F8 = toggle on/off
+-- [ = toggle on/off
 -- ]  = destroy the GUI and stop everything
 -- Slider controls the delay between full cycles (1s - 20s)
 -- Run in your executor.
@@ -186,7 +186,7 @@ local hint = Instance.new("TextLabel")
 hint.Size = UDim2.new(1, 0, 0, 20)
 hint.Position = UDim2.new(0, 0, 0, 122)
 hint.BackgroundTransparency = 1
-hint.Text = "F8 toggle  ·  ] destroy  ·  drag slider"
+hint.Text = "[ toggle  ·  ] destroy  ·  drag slider"
 hint.TextColor3 = Color3.fromRGB(150, 150, 150)
 hint.Font = Enum.Font.Gotham
 hint.TextSize = 12
@@ -305,7 +305,7 @@ state.destroy = destroy
 
 UIS.InputBegan:Connect(function(input, gp)
     if gp or destroyed then return end
-    if input.KeyCode == Enum.KeyCode.F8 then
+    if input.KeyCode == Enum.KeyCode.[ then
         toggle()
     elseif input.KeyCode == Enum.KeyCode.RightBracket then
         destroy()
