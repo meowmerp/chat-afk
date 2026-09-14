@@ -1,3 +1,46 @@
+--========================================================--
+-- ChatClicker (Final Premium Version)
+--========================================================--
+
+local UIS          = game:GetService("UserInputService")
+local VIM          = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+local Players      = game:GetService("Players")
+local player       = Players.LocalPlayer
+
+--================ CONFIG =================--
+local CLICK_POS   = Vector2.new(139, 32)
+local CLICK_DELAY = 0.6
+--==========================================--
+
+getgenv().ChatClicker = getgenv().ChatClicker or {}
+local state = getgenv().ChatClicker
+state.running   = state.running   or false
+state.loopDelay = state.loopDelay or 3
+state.gui       = state.gui       or nil
+
+local destroyed  = false
+local loopThread = nil
+
+--================ CLICK LOGIC =================--
+local function clickOnce()
+    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, true,  game, 1)
+    task.wait(0.05)
+    VIM:SendMouseButtonEvent(CLICK_POS.X, CLICK_POS.Y, 0, false, game, 1)
+end
+
+local function doCycle()
+    clickOnce()
+    task.wait(CLICK_DELAY)
+    clickOnce()
+end
+
+--================ GUI CLEANUP =================--
+if state.gui then
+    pcall(function() state.gui:Destroy() end)
+    state.gui = nil
+end
+
 --================ NEW CLEAN GUI =================--
 
 local gui = Instance.new("ScreenGui")
@@ -12,44 +55,41 @@ end
 
 state.gui = gui
 
--- Main frame
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 260, 0, 150)
 frame.Position = UDim2.new(0, 20, 0, 100)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+frame.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Parent = gui
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
+corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
--- Header
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 30)
-header.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+header.Size = UDim2.new(1, 0, 0, 32)
+header.BackgroundColor3 = Color3.fromRGB(38, 38, 45)
 header.BorderSizePixel = 0
 header.Parent = frame
 
 local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 8)
+headerCorner.CornerRadius = UDim.new(0, 10)
 headerCorner.Parent = header
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -40, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
+title.Position = UDim2.new(0, 12, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "ChatClicker"
-title.TextColor3 = Color3.fromRGB(230, 230, 230)
+title.TextColor3 = Color3.fromRGB(235, 235, 235)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 15
 title.Parent = header
 
--- Minimize button
 local minimize = Instance.new("TextButton")
 minimize.Size = UDim2.new(0, 26, 0, 26)
-minimize.Position = UDim2.new(1, -30, 0, 2)
+minimize.Position = UDim2.new(1, -30, 0, 3)
 minimize.BackgroundTransparency = 1
 minimize.Text = "-"
 minimize.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -66,10 +106,9 @@ minimize.MouseButton1Click:Connect(function()
             child.Visible = not minimized
         end
     end
-    frame.Size = minimized and UDim2.new(0, 260, 0, 30) or UDim2.new(0, 260, 0, 150)
+    frame.Size = minimized and UDim2.new(0, 260, 0, 32) or UDim2.new(0, 260, 0, 150)
 end)
 
--- Dragging
 local dragStart, startPos
 
 header.InputBegan:Connect(function(input)
@@ -95,18 +134,29 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- ON/OFF text
+-- STATUS INDICATOR + TEXT (closer + nicer)
+local indicator = Instance.new("Frame")
+indicator.Size = UDim2.new(0, 12, 0, 12)
+indicator.Position = UDim2.new(0, 10, 0, 42)
+indicator.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+indicator.BorderSizePixel = 0
+indicator.Parent = frame
+
+local indCorner = Instance.new("UICorner")
+indCorner.CornerRadius = UDim.new(1, 0)
+indCorner.Parent = indicator
+
 local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(1, -20, 0, 20)
-statusText.Position = UDim2.new(0, 10, 0, 40)
+statusText.Size = UDim2.new(1, -40, 0, 20)
+statusText.Position = UDim2.new(0, 28, 0, 38)
 statusText.BackgroundTransparency = 1
-statusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+statusText.TextColor3 = Color3.fromRGB(255, 60, 60)
 statusText.Font = Enum.Font.GothamBold
 statusText.TextSize = 14
 statusText.Text = "Status: OFF"
 statusText.Parent = frame
 
--- Click position label
+-- CLICK POSITION
 local coordLabel = Instance.new("TextLabel")
 coordLabel.Size = UDim2.new(1, -20, 0, 20)
 coordLabel.Position = UDim2.new(0, 10, 0, 65)
@@ -117,7 +167,7 @@ coordLabel.TextSize = 13
 coordLabel.Text = "Click @ (" .. CLICK_POS.X .. ", " .. CLICK_POS.Y .. ")"
 coordLabel.Parent = frame
 
--- Delay label
+-- DELAY LABEL
 local delayLabel = Instance.new("TextLabel")
 delayLabel.Size = UDim2.new(1, -20, 0, 20)
 delayLabel.Position = UDim2.new(0, 10, 0, 90)
@@ -128,7 +178,7 @@ delayLabel.TextSize = 13
 delayLabel.Text = "Loop delay: " .. state.loopDelay .. "s"
 delayLabel.Parent = frame
 
--- Slider
+-- SLIDER
 local sliderBg = Instance.new("Frame")
 sliderBg.Size = UDim2.new(1, -40, 0, 14)
 sliderBg.Position = UDim2.new(0, 20, 0, 120)
@@ -213,7 +263,69 @@ UIS.InputEnded:Connect(function(input)
     end
 end)
 
--- Status updater
-function updateGui()
-    statusText.Text = state.running and "Status: ON" or "Status: OFF"
+--================ LOOP =================--
+local function _updateGui()
+    if state.running then
+        statusText.Text = "Status: ON"
+        statusText.TextColor3 = Color3.fromRGB(0, 255, 120)
+        indicator.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
+    else
+        statusText.Text = "Status: OFF"
+        statusText.TextColor3 = Color3.fromRGB(255, 60, 60)
+        indicator.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+    end
 end
+
+local function startLoop()
+    if loopThread then return end
+    loopThread = task.spawn(function()
+        while state.running and not destroyed do
+            local ok, err = pcall(function()
+                doCycle()
+                task.wait(state.loopDelay)
+            end)
+            if not ok then
+                warn("[ChatClicker] error: " .. tostring(err))
+                state.running = false
+                _updateGui()
+                break
+            end
+        end
+        loopThread = nil
+    end)
+end
+
+local function stopLoop()
+    state.running = false
+    loopThread = nil
+end
+
+--================ KEYBINDS =================--
+local function toggle()
+    if destroyed then return end
+    state.running = not state.running
+    if state.running then startLoop() else stopLoop() end
+    _updateGui()
+end
+
+local function destroy()
+    if destroyed then return end
+    destroyed = true
+    state.running = false
+    loopThread = nil
+    if state.gui then
+        pcall(function() state.gui:Destroy() end)
+        state.gui = nil
+    end
+end
+
+UIS.InputBegan:Connect(function(input, gp)
+    if gp or destroyed then return end
+    if input.KeyCode == Enum.KeyCode.F8 then
+        toggle()
+    elseif input.KeyCode == Enum.KeyCode.RightBracket then
+        destroy()
+    end
+end)
+
+_updateGui()
